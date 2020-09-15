@@ -33,3 +33,27 @@
     public 对外部完全可见。
     protected 对本包和所有子类可见。
     默认，不加修饰符  对本包可见。
+5.2.3
+    编写一个完美的equals方法建议：
+    1.显示参数命名为otherObject，稍后需要将它强制转成另一个名为other的变量。
+    2.检测this与otherObject是否相等：
+    if(this == otherObject) return true;
+    3.检测otherObject是否为null，如果为null，返回false。这项检测是很必要的。
+    if(otherObject == null) return false;
+    4.比较this与otherObject的类。如果equals的语义可以在子类中改变，就使用getClass检测：
+    if(getClass() != otherObject.getClass()) return false;
+    如果所有的子类都有相同的相等性语义，可以使用instanceof检测：
+    if(!(otherObject instanceof ClassName)) return false;
+    5.将otherObject强制转换为相应类类型的变量：
+    ClassName other = (ClassName) otherObject;
+    6.现在根据相等性概念的要求来比较字段。使用==比较基本类型字段，使用Objects.equals比较对象字段。如果所有的字段都匹配，就返回true；否则返回false。
+
+    常见错误：
+    public class Employee {
+        public boolean equals(Employee other) {//error：参数类型为Employee，并没有覆盖Object类的equals方法，而是定义了一个完全无关的方法。
+            return .....;
+        }
+    }
+5.2.4
+    如果重新定义了equals方法，就必须为用户可能插入散列表的对象重新定义hashCode方法。
+    static int Objects.hash(Object... objects);
