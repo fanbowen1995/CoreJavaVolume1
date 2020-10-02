@@ -57,3 +57,32 @@
 5.2.4
     如果重新定义了equals方法，就必须为用户可能插入散列表的对象重新定义hashCode方法。
     static int Objects.hash(Object... objects);
+5.4
+    包装器类是不可改变的，即一旦构造了包装器，就不允许更改包装在其中的值。同时，包装器类还是final，因此不能派生它们的子类。
+    ArrayList<Integer>的效率远远低于int[]。
+    自动地装箱和拆箱也适用于算数表达式。例如，可以将自增运算符应用于一个包装器引用：
+        Integer n = 3
+        n++;
+    比较两个包装器对象时调用equals方法，下面的比较通常会失败：
+        Integer a = 1000;
+        Integer b = 1000;
+        if(a == b) ...
+    自动装箱规范要求 boolean、byte、char <= 127，介于 -128 和 127 之间的 short 和 int 被包装到固定的对象中。
+    装箱和拆箱是编译器要做的工作，而不是虚拟机。编译器在生成类的字节码时会插入必要的方法调用。虚拟机只是执行这些字节码。
+5.5
+    允许将数组作为最后一个参数传递给有可变参数的方法。
+5.6 枚举类
+    定义枚举类型 public enum Size { SMALL, MEDIUM, LARGE, EXTRA_LARGE };
+    这个声明定义的类型是一个类，它刚好有4个实例，不可能构造新的对象。
+    因此，在比较两个枚举类型的值时，并不需要调用equals，直接使用“==”就可以了。
+    如果需要的话，可以为枚举类型增加构造器、方法和字段。构造器只是在构造枚举常量的时候调用。示例如下：
+    public enum Size {
+        SMALL("S"), MEDIUM("M"), LARGE("L"), EXTRA_LARGE("XL");
+
+        private String abbreviation;
+
+        private Size(String abbreviation) { this.abbreviation = abbreviation; }
+        public String getAbbreviation() { return abbreviation; }
+    }
+    枚举的构造器总是私有的，可以省略 private 修饰符。如果修饰一个 enmu 构造器为 public 或 protected，会出现语法错误。
+    所有的枚举类型都是Enum类的子类。
