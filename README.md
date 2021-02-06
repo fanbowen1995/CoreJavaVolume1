@@ -104,10 +104,12 @@
     6.使用多态，而不要使用类型信息。
     7.不要滥用反射。
 6.1 接口
+6.1.1 接口的概念
     接口中的所有方法都自动是public方法。因此，在接口中声明方法时，不必提供关键字public。
     接口可以定义常量。接口绝不会有实例字段，在Java 8之前，接口中绝对不会实现方法（现在可以在接口中提供简单的方法，但这些方法不能引用实例字段--接口没有实例。）
     在接口声明中不必将方法声明为public，因为在接口中所有方法都自动是public。不过，在实现接口时，必须把方法声明为public；否则，编译器将认为这个方法的访问属性是protected，这是类的默认访问属性，之后编译器就会报错，指出试图提供更严格的访问权限。
     继承中可能会出现问题，详见227页注释。
+6.1.2 接口的属性
     与建立类的继承层次一样，也可以扩展接口。例如：
     public interface Moveable {
         void move(double x, double y);
@@ -121,4 +123,77 @@
         double SPEED_LIMIT = 95;//a public static final constant
     }
     与接口中的方法都自动被设置为public一样，接口中的字段总是public static final。
-    
+6.1.4 静态和私有方法
+    在Java 8中，允许在接口中增加静态方法。
+    在Java 9中，接口中的方法可以是private。private方法可以是静态方法或实例方法。由于私有方法只能在接口本身的方法中使用，所以用法很有限，只能作为接口中其他方法的辅助方法。
+6.1.5 默认方法
+    可以为接口方法提供一个默认实现。必须用default修饰符标记这样一个方法。默认方法可以调用其他方法。
+    public interface Comparable<T> {
+        default int compareTo(T other) { return 0; }
+          // by default, all elements are the same
+    }
+    默认方法的一个重要用法是“接口演化”（详见231页）。为接口增加一个非默认方法不能保证“源代码兼容（编译不通过）”；为接口增加方法可以保证“二进制兼容（不重新编译，使用原先的JAR文件可正常加载类）”。
+6.1.6 解决默认方法冲突
+    如果先在一个接口中将一个方法定义为默认方法，然后又在超类或另一个接口中定义同样的方法，规则如下：
+    1.超类优先。如果超类提供了一个具体方法，同名而且有相同参数类型的默认方法会被忽略（类优先规则）。
+    2.接口冲突。如果一个接口提供了一个默认方法，另一个接口提供了一个同名而且参数类型（不论是否是默认参数）相同的方法，必须覆盖这个方法来解决冲突。
+    两个包含getName方法的接口：
+    interface Person {
+        default String getName() { return ""; }
+    }
+
+    interface Named {
+        default String getName() { return getClass().getName() + "_" + hashCode(); }
+    }
+    如果一个Student类同时实现了这两个接口，Java编译器会报告一个错误。只需要在Student类中提供一个getName方法即可，如下所示：
+    class Student implements Person, Named {
+        public String getName() { return Person.super.getName(); }
+    }
+    现在假设Named接口没有为getName提供默认实现：
+    interface Named {
+        String getName();
+    }
+    如果至少有一个接口提供了一个实现，编译器就会报告错误，程序员必须解决这个二义性。如果两个接口都没有为共享方法提供默认实现，那么就不存在冲突。实现类可以有两个选择：实现这个方法，或者干脆不实现（这个类本身就是抽象的）。
+    警告：千万不要让一个默认方法重新定义Object类中的某个方法。例如，不能为toString或equals定义默认方法。由于“类优先”规则，这样的方法绝对无法超越Object.toString或Object.equals。
+6.1.9 对象克隆
+    对于每一个类，需要确定：
+    1.默认的clone方法是否满足要求；
+    2.是否可以在可变的子对象上调用clone来修补默认的clone方法；
+    3.是否不该使用clone。
+
+    如果选择第1项或第2项，类必须：
+    1.实现Cloneable接口；
+    2.重新定义clone方法，并指定public访问修饰符。
+    注释：Object类中的clone方法声明为protected，所以你的代码不能直接调用anObject.clone()。子类只能调用受保护的clone方法来克隆它自己的对象。必须重新定义clone为public才能允许所有方法克隆对象。
+
+    在这里，Cloneable接口的出现与接口正常使用并没有关系。具体来说，它没有指定clone方法，这个方法是从Object类继承的。这个接口只是作为一个标记，指示类设计者了解克隆过程。如果一个对象请求克隆，但是没有实现这个接口，就会生成一个检查型异常。
+    注释：Cloneable接口是Java提供的少数标记接口之一。（有些程序员称之为记号接口）标记接口不包含任何方法，它唯一的作用就是允许在类型查询中使用instanceof：
+    if(obj instanceof Cloneable) ...
+    建议自己的程序中不要使用标记接口。
+
+    即使clone的默认（浅拷贝）实现能够满足要求，还是需要实现Cloneable接口，将clone重新定义为public，再调用super.clone()。下面给出一个例子：
+    class Employee implements Cloneable {
+        //public access, change return type
+        public Employee clone() throws CloneNotSupportedException {
+            return (Employee)super.clone();
+        }
+    }
+    创建深拷贝的clone方法的一个例子：
+    class Employee implements Cloneable {
+        ...
+        public Employee clone throws CloneNotSupportedException {
+            //call Object.clone()
+            Employee cloned = (Employee) super.clone();
+
+            //clone mutable fields
+            cloned.hireDay = (Date) hireDay.clone();
+
+            return cloned;
+        }
+    }
+
+    必须当心子类的克隆。例如，一旦为Employee类定义了clone方法，任何人都可以用它来克隆Manager对象。但是Manager可能会有需要深拷贝或不可克隆的字段。不能保证子类的实现者一定会修正clone方法让它正常工作。出于这个原因，在Object类中clone方法声明为protected。不过，如果你希望类用户调用clone，就不能这样做。
+    注释：所有数组类型都有一个公共的clone方法，而不是受保护的。可以用这个方法建立一个新数组，包含原数组所有元素的副本。例如：
+    int[] luckyNumbers = { 2, 3, 5, 7, 11, 13 };
+    int[] cloned = luckyNumbers.clone();
+    cloned[5] = 12; // doesn't change luckyNumbers[5]
