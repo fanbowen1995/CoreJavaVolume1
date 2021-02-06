@@ -103,3 +103,22 @@
     5.在覆盖方法时，不要改变预期的行为。
     6.使用多态，而不要使用类型信息。
     7.不要滥用反射。
+6.1 接口
+    接口中的所有方法都自动是public方法。因此，在接口中声明方法时，不必提供关键字public。
+    接口可以定义常量。接口绝不会有实例字段，在Java 8之前，接口中绝对不会实现方法（现在可以在接口中提供简单的方法，但这些方法不能引用实例字段--接口没有实例。）
+    在接口声明中不必将方法声明为public，因为在接口中所有方法都自动是public。不过，在实现接口时，必须把方法声明为public；否则，编译器将认为这个方法的访问属性是protected，这是类的默认访问属性，之后编译器就会报错，指出试图提供更严格的访问权限。
+    继承中可能会出现问题，详见227页注释。
+    与建立类的继承层次一样，也可以扩展接口。例如：
+    public interface Moveable {
+        void move(double x, double y);
+    }
+    public interface Powered extends Moveable {
+        double milesPerGallon();
+    }
+    接口中不能包含实例字段，但可以包含常量。例如：
+    public interface Powered extends Moveable {
+        double milesPerGallon();
+        double SPEED_LIMIT = 95;//a public static final constant
+    }
+    与接口中的方法都自动被设置为public一样，接口中的字段总是public static final。
+    
